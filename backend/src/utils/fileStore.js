@@ -1,4 +1,39 @@
-const products = [
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const dataDir = path.join(__dirname, '..', '..', 'data');
+
+const ensureDataDir = () => {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+};
+
+const readJson = (filename, fallback) => {
+  ensureDataDir();
+  const filePath = path.join(dataDir, filename);
+  if (!fs.existsSync(filePath)) {
+    writeJson(filename, fallback);
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch {
+    writeJson(filename, fallback);
+    return fallback;
+  }
+};
+
+const writeJson = (filename, data) => {
+  ensureDataDir();
+  fs.writeFileSync(path.join(dataDir, filename), JSON.stringify(data, null, 2));
+};
+
+export const seedProducts = [
   {
     id: 1,
     title: 'Aurora Smart Watch',
@@ -73,4 +108,9 @@ const products = [
   },
 ];
 
-export default products;
+export const getProducts = () => readJson('products.json', seedProducts);
+export const saveProducts = (products) => writeJson('products.json', products);
+export const getUsers = () => readJson('users.json', []);
+export const saveUsers = (users) => writeJson('users.json', users);
+export const getOrders = () => readJson('orders.json', []);
+export const saveOrders = (orders) => writeJson('orders.json', orders);
