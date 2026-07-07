@@ -1,11 +1,16 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { getUsers, saveUsers } from '../utils/fileStore.js';
+import User from '../models/User.js';
+import { formatUser } from '../utils/serialize.js';
 
 const router = express.Router();
 
-const createToken = (user) => jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+const createToken = (user) => jwt.sign(
+  { id: user._id.toString(), email: user.email, role: user.role || 'user' },
+  process.env.JWT_SECRET,
+  { expiresIn: '7d' },
+);
 
 router.post('/register', async (req, res, next) => {
   try {
@@ -14,7 +19,6 @@ router.post('/register', async (req, res, next) => {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
 
-    // Basic validation: only allow gmail addresses and password length
     const normalizedEmail = String(email).trim().toLowerCase();
     if (!normalizedEmail.endsWith('@gmail.com')) {
       return res.status(400).json({ message: 'Email must be a gmail.com address' });
@@ -24,26 +28,21 @@ router.post('/register', async (req, res, next) => {
       return res.status(400).json({ message: 'Password must be at least 8 characters' });
     }
 
-    const users = getUsers();
-    const existing = users.find((user) => user.email.toLowerCase() === normalizedEmail);
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       return res.status(409).json({ message: 'User already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = {
-      id: Date.now().toString(),
+    const user = await User.create({
       name,
       email: normalizedEmail,
       password: hashedPassword,
-      createdAt: new Date().toISOString(),
-    };
-
-    users.push(user);
-    saveUsers(users);
+      role: 'user',
+    });
 
     const token = createToken(user);
-    res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email } });
+    res.status(201).json({ token, user: formatUser(user) });
   } catch (error) {
     next(error);
   }
@@ -56,8 +55,7 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const users = getUsers();
-    const user = users.find((item) => item.email.toLowerCase() === email.toLowerCase());
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -68,7 +66,32 @@ router.post('/login', async (req, res, next) => {
     }
 
     const token = createToken(user);
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+    res.json({ token, user: formatUser(user) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/admin/login', async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user || user.role !== 'admin') {
+      return res.status(401).json({ message: 'Invalid admin credentials' });
+    }
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return res.status(401).json({ message: 'Invalid admin credentials' });
+    }
+
+    const token = createToken(user);
+    res.json({ token, user: formatUser(user) });
   } catch (error) {
     next(error);
   }

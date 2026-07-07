@@ -1,12 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import { useStore } from '../context/StoreContext';
+import { apiGet } from '../services/api';
 
 export default function Products() {
   const { products, loading, searchQuery, setSearchQuery } = useStore();
   const [search, setSearch] = useState(searchQuery);
   const [category, setCategory] = useState('All');
   const [sort, setSort] = useState('featured');
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    apiGet('/categories')
+      .then((data) => setCategories(data.categories || []))
+      .catch(() => setCategories([]));
+  }, []);
 
   const effectiveSearch = searchQuery || search;
 
@@ -38,11 +46,9 @@ export default function Products() {
           }} placeholder="Search products" style={{ padding: '0.75rem 1rem', borderRadius: '999px', border: '1px solid #e2e8f0' }} />
           <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ padding: '0.75rem 1rem', borderRadius: '999px', border: '1px solid #e2e8f0' }}>
             <option>All</option>
-            <option>Electronics</option>
-            <option>Accessories</option>
-            <option>Fashion</option>
-            <option>Home</option>
-            <option>Fitness</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.name}>{cat.name}</option>
+            ))}
           </select>
           <select value={sort} onChange={(e) => setSort(e.target.value)} style={{ padding: '0.75rem 1rem', borderRadius: '999px', border: '1px solid #e2e8f0' }}>
             <option value="featured">Featured</option>

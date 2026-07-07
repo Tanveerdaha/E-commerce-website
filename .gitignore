@@ -89,6 +89,10 @@ temp/
 .firebase/
 
 # =========================
-# Miscellaneous
+# Uploads (user-generated files)
+# =========================
+backend/uploads/*
+!backend/uploads/.gitkeep
+
 # =========================
 *.local

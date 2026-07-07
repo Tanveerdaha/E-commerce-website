@@ -5,5 +5,29 @@
     "email": "tester-1783406279470@gmail.com",
     "password": "$2a$10$CAZbj7Yp9GRnOyJP.vqKKulh/1BdyWHlILqrALtM3FGKlDd4Yqfeq",
     "createdAt": "2026-07-07T06:37:59.592Z"
+  },
+  {
+    "id": "admin-1",
+    "name": "Store Admin",
+    "email": "admin@northstar.com",
+    "password": "$2a$10$5z7YiUSW6PG4iM.pnofmwufPmGDrv/Zq6kfsrB5.9YHE57jW0VzKe",
+    "role": "admin",
+    "createdAt": "2026-07-07T17:57:07.614Z"
+  },
+  {
+    "id": "1783447027778",
+    "name": "Test User",
+    "email": "tester-1783447027701@gmail.com",
+    "password": "$2a$10$si9oy1dLQiLH5/ukMnrfGuczR.3b8F3cz/eHUZRteZilJ0u/7MRam",
+    "role": "user",
+    "createdAt": "2026-07-07T17:57:07.778Z"
+  },
+  {
+    "id": "1783447027997",
+    "name": "Regular User",
+    "email": "user-1783447027930@gmail.com",
+    "password": "$2a$10$ZbSg.9PdTkk1ObXxa3zKCO96xXOGzLuBfAiyB9Lspo/1NSlsbGgPa",
+    "role": "user",
+    "createdAt": "2026-07-07T17:57:07.997Z"
   }
 ]

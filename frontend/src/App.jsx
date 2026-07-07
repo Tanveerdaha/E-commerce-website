@@ -1,9 +1,12 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { StoreProvider } from './context/StoreContext';
+import { AdminProvider } from './context/AdminContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminRoute from './components/admin/AdminRoute';
 import Home from './pages/Home';
 import Products from './pages/Products';
 import ProductDetails from './pages/ProductDetails';
@@ -11,6 +14,10 @@ import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminProducts from './pages/admin/AdminProducts';
+import AdminCategories from './pages/admin/AdminCategories';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -38,15 +45,48 @@ function AnimatedRoutes() {
   );
 }
 
+function StorefrontShell() {
+  return (
+    <>
+      <Navbar />
+      <CartDrawer />
+      <AnimatedRoutes />
+      <Footer />
+    </>
+  );
+}
+
+function AppRoutes() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
+  if (isAdminRoute) {
+    return (
+      <Routes>
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route element={<AdminRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/products" element={<AdminProducts />} />
+            <Route path="/admin/categories" element={<AdminCategories />} />
+          </Route>
+        </Route>
+        <Route path="/admin/*" element={<NotFound />} />
+      </Routes>
+    );
+  }
+
+  return <StorefrontShell />;
+}
+
 function App() {
   return (
     <StoreProvider>
-      <BrowserRouter>
-        <Navbar />
-        <CartDrawer />
-        <AnimatedRoutes />
-        <Footer />
-      </BrowserRouter>
+      <AdminProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AdminProvider>
     </StoreProvider>
   );
 }
