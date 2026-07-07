@@ -1,11 +1,12 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import requireAdmin from '../middleware/admin.js';
 import { uploadImage } from '../middleware/upload.js';
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
-import { formatProduct, formatCategory } from '../utils/serialize.js';
+import { formatProduct, formatCategory, formatOrder } from '../utils/serialize.js';
 import { getNextProductId, getNextCategoryId, slugify } from '../utils/seed.js';
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -319,6 +320,80 @@ router.delete('/categories/:id', async (req, res, next) => {
 
     await category.deleteOne();
     res.json({ category: formatCategory(category) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// --- Orders ---
+
+router.get('/orders', async (_req, res, next) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    const userIds = [...new Set(orders.map((order) => order.userId))];
+    const validUserIds = userIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    const users = validUserIds.length
+      ? await User.find({ _id: { $in: validUserIds } }).select('name email')
+      : [];
+    const userMap = Object.fromEntries(users.map((user) => [user._id.toString(), user]));
+
+    res.json({
+      orders: orders.map((order) => {
+        const account = userMap[order.userId];
+        return {
+          ...formatOrder(order),
+          customer: {
+            id: order.userId,
+            name: order.shipping?.fullName || account?.name || 'Unknown',
+            email: order.shipping?.email || account?.email || '—',
+            phone: order.shipping?.phone || '—',
+            city: order.shipping?.city || '—',
+            address: order.shipping?.address || '—',
+            postalCode: order.shipping?.postalCode || '—',
+          },
+          itemCount: order.items.reduce((sum, item) => sum + (item.quantity || 1), 0),
+        };
+      }),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// --- Customers ---
+
+router.get('/customers', async (_req, res, next) => {
+  try {
+    const users = await User.find({ role: 'user' }).select('-password').sort({ createdAt: -1 });
+
+    const orderStats = await Order.aggregate([
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: '$userId',
+          orderCount: { $sum: 1 },
+          totalSpent: { $sum: '$total' },
+          city: { $first: '$shipping.city' },
+        },
+      },
+    ]);
+
+    const statsMap = Object.fromEntries(orderStats.map((stat) => [stat._id, stat]));
+
+    res.json({
+      customers: users.map((user) => {
+        const stats = statsMap[user._id.toString()];
+        return {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          city: stats?.city || '—',
+          orderCount: stats?.orderCount || 0,
+          totalSpent: stats?.totalSpent || 0,
+          joinedAt: user.createdAt,
+        };
+      }),
+    });
   } catch (error) {
     next(error);
   }

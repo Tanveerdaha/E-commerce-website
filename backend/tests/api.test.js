@@ -126,3 +126,74 @@ test('admin analytics endpoint returns overview', async () => {
   assert.ok(response.body.analytics.overview);
   assert.ok(Array.isArray(response.body.analytics.topRatedProducts));
 });
+
+test('checkout flow creates order with shipping', async () => {
+  const email = `buyer-${Date.now()}@gmail.com`;
+  const registerResponse = await request(app).post('/api/auth/register').send({
+    name: 'Buyer Test',
+    email,
+    password: 'Password123!',
+  });
+  const token = registerResponse.body.token;
+
+  await request(app)
+    .post('/api/cart/add')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      id: 1,
+      title: 'Aurora Smart Watch',
+      price: 249,
+      discount: 15,
+      quantity: 1,
+      images: ['https://example.com/watch.jpg'],
+    });
+
+  const checkoutResponse = await request(app)
+    .post('/api/orders/checkout')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      shipping: {
+        fullName: 'Buyer Test',
+        email,
+        phone: '03001234567',
+        address: '123 Main St',
+        city: 'Lahore',
+        postalCode: '54000',
+      },
+      paymentMethod: 'cod',
+    });
+
+  assert.equal(checkoutResponse.status, 201);
+  assert.ok(checkoutResponse.body.order.id);
+  assert.ok(checkoutResponse.body.order.shipping);
+  assert.equal(checkoutResponse.body.order.paymentMethod, 'cod');
+
+  const ordersResponse = await request(app)
+    .get('/api/orders')
+    .set('Authorization', `Bearer ${token}`);
+
+  assert.equal(ordersResponse.status, 200);
+  assert.ok(ordersResponse.body.orders.length >= 1);
+});
+
+test('admin can list all orders and customers', async () => {
+  const loginResponse = await request(app).post('/api/auth/admin/login').send({
+    email: 'admin@northstar.com',
+    password: 'Admin@12345',
+  });
+  const token = loginResponse.body.token;
+
+  const ordersResponse = await request(app)
+    .get('/api/admin/orders')
+    .set('Authorization', `Bearer ${token}`);
+
+  assert.equal(ordersResponse.status, 200);
+  assert.ok(Array.isArray(ordersResponse.body.orders));
+
+  const customersResponse = await request(app)
+    .get('/api/admin/customers')
+    .set('Authorization', `Bearer ${token}`);
+
+  assert.equal(customersResponse.status, 200);
+  assert.ok(Array.isArray(customersResponse.body.customers));
+});

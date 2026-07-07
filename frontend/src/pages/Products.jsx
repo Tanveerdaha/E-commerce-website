@@ -36,31 +36,39 @@ export default function Products() {
   }, [effectiveSearch, category, sort, products]);
 
   return (
-    <main className="container" style={{ padding: '2rem 0 3rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <h1 style={{ margin: 0 }}>Products</h1>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <input value={search} onChange={(e) => {
-            setSearch(e.target.value);
-            setSearchQuery(e.target.value);
-          }} placeholder="Search products" style={{ padding: '0.75rem 1rem', borderRadius: '999px', border: '1px solid #e2e8f0' }} />
-          <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ padding: '0.75rem 1rem', borderRadius: '999px', border: '1px solid #e2e8f0' }}>
+    <main className="container page-main">
+      <div className="products-toolbar">
+        <h1 className="page-title">Products</h1>
+        <div className="products-filters">
+          <input
+            className="store-input"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setSearchQuery(e.target.value);
+            }}
+            placeholder="Search..."
+            aria-label="Search products"
+          />
+          <select className="store-select" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Filter by category">
             <option>All</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.name}>{cat.name}</option>
             ))}
           </select>
-          <select value={sort} onChange={(e) => setSort(e.target.value)} style={{ padding: '0.75rem 1rem', borderRadius: '999px', border: '1px solid #e2e8f0' }}>
+          <select className="store-select" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort products">
             <option value="featured">Featured</option>
-            <option value="price-low">Price: Low to High</option>
-            <option value="price-high">Price: High to Low</option>
-            <option value="rating">Top Rated</option>
+            <option value="price-low">Low price</option>
+            <option value="price-high">High price</option>
+            <option value="rating">Top rated</option>
           </select>
         </div>
       </div>
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
+      <div className="grid product-grid">
         {loading ? (
           <p>Loading products...</p>
+        ) : filteredProducts.length === 0 ? (
+          <p className="empty-state card">No products match your filters.</p>
         ) : (
           filteredProducts.map((product) => <ProductCard key={product.id} product={product} />)
         )}

@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../services/api';
+import { getCartTotal } from '../utils/pricing';
 import defaultProducts from '../data/products';
 
 const AUTH_STORAGE_KEYS = {
@@ -61,21 +62,40 @@ export function StoreProvider({ children }) {
   }, [token]);
 
   const login = async (email, password) => {
+    const guestCart = token ? [] : [...cart];
     const data = await apiPost('/auth/login', { email, password });
     localStorage.setItem(AUTH_STORAGE_KEYS.token, data.token);
     localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(data.user));
     setAuth({ token: data.token, user: data.user });
-    setCart([]);
-    setWishlist([]);
+
+    if (guestCart.length) {
+      for (const item of guestCart) {
+        await apiPost('/cart/add', item, data.token);
+      }
+    }
+
+    const cartData = await apiGet('/cart', data.token);
+    const wishlistData = await apiGet('/wishlist', data.token);
+    setCart(cartData.cart || []);
+    setWishlist(wishlistData.wishlist || []);
     return data;
   };
 
   const register = async (name, email, password) => {
+    const guestCart = token ? [] : [...cart];
     const data = await apiPost('/auth/register', { name, email, password });
     localStorage.setItem(AUTH_STORAGE_KEYS.token, data.token);
     localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(data.user));
     setAuth({ token: data.token, user: data.user });
-    setCart([]);
+
+    if (guestCart.length) {
+      for (const item of guestCart) {
+        await apiPost('/cart/add', item, data.token);
+      }
+    }
+
+    const cartData = await apiGet('/cart', data.token);
+    setCart(cartData.cart || []);
     setWishlist([]);
     return data;
   };
@@ -157,14 +177,20 @@ export function StoreProvider({ children }) {
     }
   };
 
-  const checkout = async (total) => {
-    if (!token) return null;
-    const data = await apiPost('/orders/checkout', { total }, token);
+  const checkout = async (shipping, paymentMethod = 'cod') => {
+    if (!token) throw new Error('Please log in to checkout');
+    const data = await apiPost('/orders/checkout', { shipping, paymentMethod }, token);
     setCart([]);
-    return data;
+    return data.order;
   };
 
-  const subtotal = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.quantity, 0), [cart]);
+  const fetchOrders = useCallback(async () => {
+    if (!token) return [];
+    const data = await apiGet('/orders', token);
+    return data.orders || [];
+  }, [token]);
+
+  const subtotal = useMemo(() => getCartTotal(cart), [cart]);
 
   return (
     <StoreContext.Provider value={{
@@ -184,6 +210,7 @@ export function StoreProvider({ children }) {
       removeFromCart,
       updateQuantity,
       checkout,
+      fetchOrders,
       login,
       register,
       logout,

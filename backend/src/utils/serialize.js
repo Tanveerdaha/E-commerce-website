@@ -41,6 +41,8 @@ export const formatOrder = (doc) => {
     id: order._id.toString(),
     userId: order.userId,
     items: order.items,
+    shipping: order.shipping || null,
+    paymentMethod: order.paymentMethod || 'cod',
     total: order.total,
     status: order.status,
     createdAt: order.createdAt,

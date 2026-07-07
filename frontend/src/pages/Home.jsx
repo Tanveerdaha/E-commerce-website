@@ -32,45 +32,41 @@ export default function Home() {
 
   return (
     <main>
-      <section style={{ padding: '2rem 0 3rem' }}>
-        <div className="container" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '2rem', alignItems: 'center' }}>
+      <section className="hero-section">
+        <div className="container hero-grid">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-            <p style={{ color: '#2563eb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em' }}>New season arrivals</p>
-            <h1 style={{ fontSize: 'clamp(2rem, 4vw, 3.4rem)', lineHeight: 1.1, margin: '0.4rem 0 1rem' }}>Elevated essentials for a modern lifestyle.</h1>
-            <p style={{ color: '#64748b', fontSize: '1.05rem', maxWidth: 560 }}>Discover premium products crafted to blend timeless style with everyday comfort.</p>
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.25rem' }}>
+            <p className="hero-eyebrow">New season arrivals</p>
+            <h1 className="hero-title">Elevated essentials for a modern lifestyle.</h1>
+            <p className="hero-text">Discover premium products crafted to blend timeless style with everyday comfort.</p>
+            <div className="hero-actions">
               <Link to="/products" className="btn" style={{ background: '#2563eb', color: 'white' }}>Shop Now</Link>
               <Link to="/wishlist" className="btn" style={{ background: 'white', color: '#334155' }}>View Wishlist</Link>
             </div>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="card" style={{ padding: '1rem', borderRadius: '32px' }}>
-            <img src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80" alt="hero" style={{ height: 420, objectFit: 'cover', borderRadius: '24px' }} />
+          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="card hero-image-card">
+            <img src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80" alt="Modern lifestyle collection" />
           </motion.div>
         </div>
       </section>
 
-      <section className="container" style={{ paddingBottom: '2rem' }}>
-        <h2 style={{ marginBottom: '1rem' }}>Shop by Category</h2>
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+      <section className="container section-block">
+        <h2>Shop by Category</h2>
+        <div className="grid category-grid">
           {categories.map((category) => (
-            <motion.div key={category.name} whileHover={{ scale: 1.03 }} className="card" style={{ padding: '1.25rem', textAlign: 'center', overflow: 'hidden' }}>
-              <img
-                src={category.image}
-                alt={category.name}
-                style={{ height: 90, width: '100%', objectFit: 'cover', borderRadius: 18, marginBottom: '0.75rem' }}
-              />
+            <motion.div key={category.name} whileHover={{ scale: 1.03 }} className="card category-card">
+              <img src={category.image} alt={category.name} />
               <strong>{category.name}</strong>
             </motion.div>
           ))}
         </div>
       </section>
 
-      <section className="container" style={{ paddingBottom: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 style={{ margin: 0 }}>Featured Products</h2>
+      <section className="container section-block">
+        <div className="section-header">
+          <h2>Featured Products</h2>
           <Link to="/products" style={{ color: '#2563eb', fontWeight: 700 }}>See all</Link>
         </div>
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
+        <div className="grid product-grid">
           {loading ? (
             <p>Loading products...</p>
           ) : (
