@@ -1,33 +1,24 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import { useStore } from '../context/StoreContext';
+import { apiGet } from '../services/api';
 
-const categories = [
-  {
-    name: 'Electronics',
-    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    name: 'Fashion',
-    image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    name: 'Accessories',
-    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    name: 'Home',
-    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80',
-  },
-];
+const MotionLink = motion(Link);
 
 export default function Home() {
   const { products, loading } = useStore();
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    apiGet('/categories')
+      .then((data) => setCategories(data.categories || []))
+      .catch(() => setCategories([]));
   }, []);
 
   return (
@@ -53,10 +44,19 @@ export default function Home() {
         <h2>Shop by Category</h2>
         <div className="grid category-grid">
           {categories.map((category) => (
-            <motion.div key={category.name} whileHover={{ scale: 1.03 }} className="card category-card">
-              <img src={category.image} alt={category.name} />
+            <MotionLink
+              key={category.id}
+              to={`/products?category=${encodeURIComponent(category.name)}`}
+              whileHover={{ scale: 1.03 }}
+              className="card category-card category-card-link"
+            >
+              {category.image ? (
+                <img src={category.image} alt={category.name} />
+              ) : (
+                <div className="category-card-placeholder" aria-hidden="true">{category.name.charAt(0)}</div>
+              )}
               <strong>{category.name}</strong>
-            </motion.div>
+            </MotionLink>
           ))}
         </div>
       </section>

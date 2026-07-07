@@ -120,6 +120,19 @@ export function StoreProvider({ children }) {
     setWishlist(data.wishlist || []);
   };
 
+  const rateProduct = async (productId, rating) => {
+    if (!token) throw new Error('Please log in to rate products');
+    const data = await apiPost(`/products/${productId}/rate`, { rating }, token);
+    setProducts((prev) => prev.map((item) => (item.id === productId ? data.product : item)));
+    return data;
+  };
+
+  const getMyRating = async (productId) => {
+    if (!token) return null;
+    const data = await apiGet(`/products/${productId}/my-rating`, token);
+    return data.rating;
+  };
+
   const addToCart = async (product) => {
     if (token) {
       const data = await apiPost('/cart/add', { ...product, quantity: 1 }, token);
@@ -216,6 +229,8 @@ export function StoreProvider({ children }) {
       logout,
       refreshCart,
       refreshWishlist,
+      rateProduct,
+      getMyRating,
       subtotal,
     }}>
       {children}

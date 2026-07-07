@@ -24,7 +24,10 @@ export default function ProductCard({ product }) {
       <div className="product-card-body">
         <div className="product-card-meta">
           <span className="product-card-category">{product.category}</span>
-          <span className="product-card-rating">★ {product.rating}</span>
+          <span className="product-card-rating">
+            ★ {product.rating?.toFixed(1)}
+            {product.ratingCount > 0 && <small> ({product.ratingCount})</small>}
+          </span>
         </div>
         <Link to={`/products/${product.id}`}>
           <h3 className="product-card-title">{product.title}</h3>

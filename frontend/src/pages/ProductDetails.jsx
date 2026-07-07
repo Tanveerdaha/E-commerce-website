@@ -1,12 +1,24 @@
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiHeart, FiShoppingBag } from 'react-icons/fi';
 import { useStore } from '../context/StoreContext';
+import ProductRating from '../components/ProductRating';
 
 export default function ProductDetails() {
   const { id } = useParams();
-  const { products, addToCart, toggleWishlist, wishlist } = useStore();
+  const { products, auth, addToCart, toggleWishlist, wishlist, rateProduct, getMyRating } = useStore();
   const product = products.find((item) => item.id === Number(id));
+  const [userRating, setUserRating] = useState(null);
+
+  useEffect(() => {
+    if (!auth || !product) {
+      setUserRating(null);
+      return;
+    }
+
+    getMyRating(product.id).then(setUserRating).catch(() => setUserRating(null));
+  }, [auth, product, getMyRating]);
 
   if (!product) {
     return (
@@ -17,6 +29,11 @@ export default function ProductDetails() {
   }
 
   const isWishlisted = wishlist.some((item) => item.id === product.id);
+
+  const handleRate = async (rating) => {
+    const data = await rateProduct(product.id, rating);
+    setUserRating(data.rating);
+  };
 
   return (
     <main className="container page-main">
@@ -31,8 +48,16 @@ export default function ProductDetails() {
           <p className="product-detail-desc">{product.description}</p>
           <div className="product-detail-price-row">
             <strong className="product-detail-price">${product.price}</strong>
-            <span className="product-detail-rating">★ {product.rating}</span>
           </div>
+
+          <ProductRating
+            productId={product.id}
+            averageRating={product.rating}
+            ratingCount={product.ratingCount}
+            userRating={userRating}
+            onRate={handleRate}
+          />
+
           <div className="product-detail-actions">
             <button type="button" className="btn" onClick={() => addToCart(product)} style={{ background: '#2563eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
               <FiShoppingBag /> Add to Cart

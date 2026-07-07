@@ -10,6 +10,7 @@ export const formatProduct = (doc) => {
     price: product.price,
     discount: product.discount,
     rating: product.rating,
+    ratingCount: product.ratingCount ?? 0,
     images: product.images,
     stock: product.stock,
     salesCount: product.salesCount ?? 0,

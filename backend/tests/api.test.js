@@ -197,3 +197,39 @@ test('admin can list all orders and customers', async () => {
   assert.equal(customersResponse.status, 200);
   assert.ok(Array.isArray(customersResponse.body.customers));
 });
+
+test('logged in user can rate a product', async () => {
+  const email = `rater-${Date.now()}@gmail.com`;
+  const registerResponse = await request(app).post('/api/auth/register').send({
+    name: 'Rater User',
+    email,
+    password: 'Password123!',
+  });
+  const token = registerResponse.body.token;
+
+  const rateResponse = await request(app)
+    .post('/api/products/1/rate')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ rating: 5 });
+
+  assert.equal(rateResponse.status, 200);
+  assert.equal(rateResponse.body.rating, 5);
+  assert.equal(rateResponse.body.product.rating, 5);
+  assert.equal(rateResponse.body.product.ratingCount, 1);
+
+  const myRatingResponse = await request(app)
+    .get('/api/products/1/my-rating')
+    .set('Authorization', `Bearer ${token}`);
+
+  assert.equal(myRatingResponse.status, 200);
+  assert.equal(myRatingResponse.body.rating, 5);
+
+  const updateResponse = await request(app)
+    .post('/api/products/1/rate')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ rating: 4 });
+
+  assert.equal(updateResponse.status, 200);
+  assert.equal(updateResponse.body.product.rating, 4);
+  assert.equal(updateResponse.body.product.ratingCount, 1);
+});
