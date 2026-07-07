@@ -11,8 +11,8 @@ export default function Footer() {
         <div>
           <h4>Quick Links</h4>
           <p><Link to="/products">Shop</Link></p>
-          <p><Link to="/">About</Link></p>
-          <p><Link to="/login">Support</Link></p>
+          <p><Link to="/about">About</Link></p>
+          <p><Link to="/support">Support</Link></p>
         </div>
         <div>
           <h4>Contact</h4>

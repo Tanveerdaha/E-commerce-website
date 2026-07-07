@@ -11,6 +11,7 @@ import adminRoutes from './routes/admin.js';
 import cartRoutes from './routes/cart.js';
 import wishlistRoutes from './routes/wishlist.js';
 import orderRoutes from './routes/orders.js';
+import supportRoutes from './routes/support.js';
 import { connectDB } from './config/db.js';
 import { ensureSeedData } from './utils/seed.js';
 
@@ -39,6 +40,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/support', supportRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err.stack);
@@ -78,20 +80,5 @@ if (process.env.NODE_ENV !== 'test') {
     process.exitCode = 1;
   });
 }
-
-export const startServer = async () => {
-  await connectDB();
-  await ensureSeedData();
-  return createServer();
-};
-
-export const closeServer = () => new Promise((resolve) => {
-  if (server) {
-    server.close(() => resolve());
-    server = null;
-    return;
-  }
-  resolve();
-});
 
 export default app;

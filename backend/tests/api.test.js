@@ -233,3 +233,16 @@ test('logged in user can rate a product', async () => {
   assert.equal(updateResponse.body.product.rating, 4);
   assert.equal(updateResponse.body.product.ratingCount, 1);
 });
+
+test('customer can submit a support message', async () => {
+  const response = await request(app).post('/api/support').send({
+    name: 'Support User',
+    email: 'support.user@gmail.com',
+    subject: 'Order question',
+    message: 'I need help tracking my recent order please.',
+  });
+
+  assert.equal(response.status, 201);
+  assert.match(response.body.message, /sent/i);
+  assert.ok(response.body.id);
+});

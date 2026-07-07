@@ -2,7 +2,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 const buildUrl = (path) => `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 
-export async function apiRequest(path, options = {}, token = null) {
+async function apiRequest(path, options = {}, token = null) {
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),

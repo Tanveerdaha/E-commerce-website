@@ -25,7 +25,6 @@ export function StoreProvider({ children }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [auth, setAuth] = useState(() => getStoredAuth());
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   const token = auth?.token;
 
@@ -49,10 +48,8 @@ export function StoreProvider({ children }) {
         setProducts(nextProducts);
         setCart(cartResponse.cart || []);
         setWishlist(wishlistResponse.wishlist || []);
-        setError('');
-      } catch (err) {
+      } catch {
         setProducts(defaultProducts);
-        setError(err.message || 'Unable to load data');
       } finally {
         setLoading(false);
       }
@@ -108,18 +105,6 @@ export function StoreProvider({ children }) {
     setWishlist([]);
   };
 
-  const refreshCart = async () => {
-    if (!token) return;
-    const data = await apiGet('/cart', token);
-    setCart(data.cart || []);
-  };
-
-  const refreshWishlist = async () => {
-    if (!token) return;
-    const data = await apiGet('/wishlist', token);
-    setWishlist(data.wishlist || []);
-  };
-
   const rateProduct = async (productId, rating) => {
     if (!token) throw new Error('Please log in to rate products');
     const data = await apiPost(`/products/${productId}/rate`, { rating }, token);
@@ -147,15 +132,6 @@ export function StoreProvider({ children }) {
       });
     }
     setIsCartOpen(true);
-  };
-
-  const addToWishlist = async (product) => {
-    if (token) {
-      const data = await apiPost('/wishlist/toggle', product, token);
-      setWishlist(data.wishlist || []);
-    } else {
-      setWishlist((prev) => prev.some((item) => item.id === product.id) ? prev : [...prev, product]);
-    }
   };
 
   const toggleWishlist = async (product) => {
@@ -215,10 +191,8 @@ export function StoreProvider({ children }) {
       isCartOpen,
       auth,
       loading,
-      error,
       setIsCartOpen,
       addToCart,
-      addToWishlist,
       toggleWishlist,
       removeFromCart,
       updateQuantity,
@@ -227,8 +201,6 @@ export function StoreProvider({ children }) {
       login,
       register,
       logout,
-      refreshCart,
-      refreshWishlist,
       rateProduct,
       getMyRating,
       subtotal,
