@@ -48,6 +48,7 @@ router.get('/analytics', async (_req, res, next) => {
     ]);
 
     const revenueResult = await Order.aggregate([
+      { $match: { status: 'confirmed' } },
       { $group: { _id: null, totalRevenue: { $sum: '$total' } } },
     ]);
     const totalRevenue = revenueResult[0]?.totalRevenue || 0;
@@ -55,7 +56,7 @@ router.get('/analytics', async (_req, res, next) => {
 
     const salesByProduct = {};
     const salesByCategory = {};
-    const allOrders = await Order.find();
+    const allOrders = await Order.find({ status: 'confirmed' });
 
     allOrders.forEach((order) => {
       order.items.forEach((item) => {

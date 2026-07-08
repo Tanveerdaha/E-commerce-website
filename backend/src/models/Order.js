@@ -25,6 +25,8 @@ const orderSchema = new mongoose.Schema({
   items: { type: [orderItemSchema], default: [] },
   shipping: { type: shippingSchema, default: null },
   paymentMethod: { type: String, default: 'cod' },
+  paymentStatus: { type: String, default: 'cod' },
+  stripePaymentIntentId: { type: String, default: null },
   total: { type: Number, required: true },
   status: { type: String, default: 'confirmed' },
 }, { timestamps: true });

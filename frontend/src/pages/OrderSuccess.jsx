@@ -1,9 +1,11 @@
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { FiCheckCircle } from 'react-icons/fi';
+import { getOrderStatusCopy, getPaymentMethodLabel, getPaymentStatusLabel } from '../utils/payment';
 
 export default function OrderSuccess() {
   const location = useLocation();
   const order = location.state?.order;
+  const statusCopy = getOrderStatusCopy(order);
 
   if (!order) {
     return <Navigate to="/orders" replace />;
@@ -13,13 +15,14 @@ export default function OrderSuccess() {
     <main className="container page-main">
       <div className="order-success card">
         <FiCheckCircle className="order-success-icon" />
-        <h1>Order placed successfully!</h1>
-        <p>Thank you for your purchase. Your order has been confirmed.</p>
+        <h1>{statusCopy.title}</h1>
+        <p>{statusCopy.message}</p>
 
         <div className="order-success-details">
           <div><span>Order ID</span><strong>#{order.id.slice(-8).toUpperCase()}</strong></div>
-          <div><span>Total paid</span><strong>${order.total?.toFixed(2)}</strong></div>
-          <div><span>Payment</span><strong>{order.paymentMethod === 'card' ? 'Card (demo)' : 'Cash on delivery'}</strong></div>
+          <div><span>{statusCopy.totalLabel}</span><strong>${order.total?.toFixed(2)}</strong></div>
+          <div><span>Payment</span><strong>{getPaymentMethodLabel(order.paymentMethod)}</strong></div>
+          <div><span>Payment status</span><strong>{getPaymentStatusLabel(order.paymentStatus)}</strong></div>
           <div><span>Status</span><strong className="order-status-confirmed">{order.status}</strong></div>
         </div>
 

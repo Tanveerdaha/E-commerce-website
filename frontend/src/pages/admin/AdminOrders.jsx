@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { apiGet } from '../../services/api';
 import { useAdmin } from '../../context/AdminContext';
+import { getPaymentMethodLabel } from '../../utils/payment';
 
 export default function AdminOrders() {
   const { token } = useAdmin();
@@ -90,7 +91,7 @@ export default function AdminOrders() {
                             <p>{order.customer.email}</p>
                             <p>{order.customer.phone}</p>
                             <p>{order.customer.address}, {order.customer.city} {order.customer.postalCode}</p>
-                            <p>Payment: {order.paymentMethod === 'card' ? 'Card (demo)' : 'Cash on delivery'}</p>
+                            <p>Payment: {getPaymentMethodLabel(order.paymentMethod)}</p>
                           </div>
                           <div>
                             <h4>Items</h4>

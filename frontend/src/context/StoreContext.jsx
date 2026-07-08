@@ -173,6 +173,25 @@ export function StoreProvider({ children }) {
     return data.order;
   };
 
+  const createStripePayment = async (shipping) => {
+    if (!token) throw new Error('Please log in to checkout');
+    const data = await apiPost('/orders/create-payment', { shipping }, token);
+    return data;
+  };
+
+  const confirmStripePayment = async (orderId) => {
+    if (!token) throw new Error('Please log in to checkout');
+    const data = await apiPost(`/orders/${orderId}/confirm-payment`, {}, token);
+    setCart([]);
+    return data.order;
+  };
+
+  const cancelStripePayment = async (orderId) => {
+    if (!token) throw new Error('Please log in to checkout');
+    const data = await apiPost(`/orders/${orderId}/cancel-payment`, {}, token);
+    return data.order;
+  };
+
   const fetchOrders = useCallback(async () => {
     if (!token) return [];
     const data = await apiGet('/orders', token);
@@ -197,6 +216,9 @@ export function StoreProvider({ children }) {
       removeFromCart,
       updateQuantity,
       checkout,
+      createStripePayment,
+      confirmStripePayment,
+      cancelStripePayment,
       fetchOrders,
       login,
       register,

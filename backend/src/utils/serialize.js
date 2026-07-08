@@ -44,6 +44,7 @@ export const formatOrder = (doc) => {
     items: order.items,
     shipping: order.shipping || null,
     paymentMethod: order.paymentMethod || 'cod',
+    paymentStatus: order.paymentStatus || 'cod',
     total: order.total,
     status: order.status,
     createdAt: order.createdAt,

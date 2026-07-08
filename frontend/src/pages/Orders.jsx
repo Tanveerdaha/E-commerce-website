@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
+import { getPaymentMethodLabel, getPaymentStatusLabel } from '../utils/payment';
 
 export default function Orders() {
   const { fetchOrders } = useStore();
@@ -37,6 +38,10 @@ export default function Orders() {
                   <span className="order-status-badge">{order.status}</span>
                   <strong>${order.total?.toFixed(2)}</strong>
                 </div>
+              </div>
+              <div className="order-card-payment-meta">
+                <span>{getPaymentMethodLabel(order.paymentMethod)}</span>
+                <span>{getPaymentStatusLabel(order.paymentStatus)}</span>
               </div>
               <div className="order-card-items">
                 {order.items?.map((item) => (
