@@ -70,7 +70,7 @@ export default function Home() {
           {loading ? (
             <p>Loading products...</p>
           ) : (
-            products.slice(0, 4).map((product) => <ProductCard key={product.id} product={product} />)
+            products.slice(0, 10).map((product) => <ProductCard key={product.id} product={product} />)
           )}
         </div>
       </section>
