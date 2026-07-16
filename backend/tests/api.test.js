@@ -7,6 +7,7 @@ import { ensureSeedData } from '../src/utils/seed.js';
 
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'test-refresh-secret';
 
 const mongoServer = await MongoMemoryServer.create();
 process.env.MONGODB_URI = mongoServer.getUri();
@@ -44,6 +45,8 @@ test('register and login flows work', async () => {
 
   assert.equal(registerResponse.status, 201);
   assert.ok(registerResponse.body.token);
+  assert.ok(registerResponse.body.accessToken);
+  assert.ok(registerResponse.body.refreshToken);
 
   const loginResponse = await request(app).post('/api/auth/login').send({
     email,
@@ -52,6 +55,46 @@ test('register and login flows work', async () => {
 
   assert.equal(loginResponse.status, 200);
   assert.ok(loginResponse.body.token);
+  assert.ok(loginResponse.body.accessToken);
+  assert.ok(loginResponse.body.refreshToken);
+});
+
+test('refresh token issues new access token and rejects invalid refresh', async () => {
+  const email = `refresh-${Date.now()}@gmail.com`;
+  const registerResponse = await request(app).post('/api/auth/register').send({
+    name: 'Refresh User',
+    email,
+    password: 'Password123!',
+  });
+
+  assert.equal(registerResponse.status, 201);
+
+  const refreshResponse = await request(app).post('/api/auth/refresh').send({
+    refreshToken: registerResponse.body.refreshToken,
+  });
+
+  assert.equal(refreshResponse.status, 200);
+  assert.ok(refreshResponse.body.accessToken);
+  assert.ok(refreshResponse.body.refreshToken);
+  assert.ok(refreshResponse.body.token);
+
+  const protectedResponse = await request(app)
+    .get('/api/orders')
+    .set('Authorization', `Bearer ${refreshResponse.body.accessToken}`);
+  assert.equal(protectedResponse.status, 200);
+
+  const refreshAsAccess = await request(app)
+    .get('/api/orders')
+    .set('Authorization', `Bearer ${registerResponse.body.refreshToken}`);
+  assert.equal(refreshAsAccess.status, 401);
+
+  const invalidRefresh = await request(app).post('/api/auth/refresh').send({
+    refreshToken: 'not-a-valid-token',
+  });
+  assert.equal(invalidRefresh.status, 401);
+
+  const missingRefresh = await request(app).post('/api/auth/refresh').send({});
+  assert.equal(missingRefresh.status, 401);
 });
 
 test('admin login and product CRUD', async () => {

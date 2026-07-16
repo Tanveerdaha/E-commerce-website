@@ -1,16 +1,20 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { formatUser } from '../utils/serialize.js';
+import { createAuthTokens, verifyRefreshToken } from '../utils/tokens.js';
 
 const router = express.Router();
 
-const createToken = (user) => jwt.sign(
-  { id: user._id.toString(), email: user.email, role: user.role || 'user' },
-  process.env.JWT_SECRET,
-  { expiresIn: '7d' },
-);
+const issueTokens = (user) => {
+  const tokens = createAuthTokens(user);
+  return {
+    token: tokens.accessToken,
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    user: formatUser(user),
+  };
+};
 
 router.post('/register', async (req, res, next) => {
   try {
@@ -41,8 +45,7 @@ router.post('/register', async (req, res, next) => {
       role: 'user',
     });
 
-    const token = createToken(user);
-    res.status(201).json({ token, user: formatUser(user) });
+    res.status(201).json(issueTokens(user));
   } catch (error) {
     next(error);
   }
@@ -65,8 +68,7 @@ router.post('/login', async (req, res, next) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const token = createToken(user);
-    res.json({ token, user: formatUser(user) });
+    res.json(issueTokens(user));
   } catch (error) {
     next(error);
   }
@@ -90,8 +92,36 @@ router.post('/admin/login', async (req, res, next) => {
       return res.status(401).json({ message: 'Invalid admin credentials' });
     }
 
-    const token = createToken(user);
-    res.json({ token, user: formatUser(user) });
+    res.json(issueTokens(user));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/refresh', async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(401).json({ message: 'Refresh token required' });
+    }
+
+    let decoded;
+    try {
+      decoded = verifyRefreshToken(refreshToken);
+    } catch {
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
+
+    if (decoded.role === 'admin' && user.role !== 'admin') {
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
+
+    res.json(issueTokens(user));
   } catch (error) {
     next(error);
   }

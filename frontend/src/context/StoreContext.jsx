@@ -1,21 +1,16 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../services/api';
+import {
+  USER_AUTH_KEYS,
+  clearSession,
+  getStoredSession,
+  saveAuthSession,
+  subscribeAuthChanges,
+} from '../services/authStorage';
 import { getCartTotal } from '../utils/pricing';
 import defaultProducts from '../data/products';
 
-const AUTH_STORAGE_KEYS = {
-  token: 'northstar-token',
-  user: 'northstar-user',
-};
-
 const StoreContext = createContext();
-
-const getStoredAuth = () => {
-  if (typeof window === 'undefined') return null;
-  const token = localStorage.getItem(AUTH_STORAGE_KEYS.token);
-  const user = localStorage.getItem(AUTH_STORAGE_KEYS.user);
-  return token && user ? { token, user: JSON.parse(user) } : null;
-};
 
 export function StoreProvider({ children }) {
   const [products, setProducts] = useState(defaultProducts);
@@ -23,17 +18,20 @@ export function StoreProvider({ children }) {
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [auth, setAuth] = useState(() => getStoredAuth());
+  const [auth, setAuth] = useState(() => getStoredSession(USER_AUTH_KEYS));
   const [loading, setLoading] = useState(true);
 
   const token = auth?.token;
 
-  useEffect(() => {
-    if (auth) {
-      localStorage.setItem(AUTH_STORAGE_KEYS.token, auth.token);
-      localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(auth.user));
+  useEffect(() => subscribeAuthChanges((session, nextAuth) => {
+    if (session === 'user') {
+      setAuth(nextAuth);
+      if (!nextAuth) {
+        setCart([]);
+        setWishlist([]);
+      }
     }
-  }, [auth]);
+  }), []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -61,18 +59,17 @@ export function StoreProvider({ children }) {
   const login = async (email, password) => {
     const guestCart = token ? [] : [...cart];
     const data = await apiPost('/auth/login', { email, password });
-    localStorage.setItem(AUTH_STORAGE_KEYS.token, data.token);
-    localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(data.user));
-    setAuth({ token: data.token, user: data.user });
+    const nextAuth = saveAuthSession('user', data);
+    setAuth(nextAuth);
 
     if (guestCart.length) {
       for (const item of guestCart) {
-        await apiPost('/cart/add', item, data.token);
+        await apiPost('/cart/add', item, nextAuth.token);
       }
     }
 
-    const cartData = await apiGet('/cart', data.token);
-    const wishlistData = await apiGet('/wishlist', data.token);
+    const cartData = await apiGet('/cart', nextAuth.token);
+    const wishlistData = await apiGet('/wishlist', nextAuth.token);
     setCart(cartData.cart || []);
     setWishlist(wishlistData.wishlist || []);
     return data;
@@ -81,25 +78,23 @@ export function StoreProvider({ children }) {
   const register = async (name, email, password) => {
     const guestCart = token ? [] : [...cart];
     const data = await apiPost('/auth/register', { name, email, password });
-    localStorage.setItem(AUTH_STORAGE_KEYS.token, data.token);
-    localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(data.user));
-    setAuth({ token: data.token, user: data.user });
+    const nextAuth = saveAuthSession('user', data);
+    setAuth(nextAuth);
 
     if (guestCart.length) {
       for (const item of guestCart) {
-        await apiPost('/cart/add', item, data.token);
+        await apiPost('/cart/add', item, nextAuth.token);
       }
     }
 
-    const cartData = await apiGet('/cart', data.token);
+    const cartData = await apiGet('/cart', nextAuth.token);
     setCart(cartData.cart || []);
     setWishlist([]);
     return data;
   };
 
   const logout = () => {
-    localStorage.removeItem(AUTH_STORAGE_KEYS.token);
-    localStorage.removeItem(AUTH_STORAGE_KEYS.user);
+    clearSession(USER_AUTH_KEYS);
     setAuth(null);
     setCart([]);
     setWishlist([]);

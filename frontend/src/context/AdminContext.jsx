@@ -1,38 +1,30 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { apiPost } from '../services/api';
-
-const ADMIN_STORAGE_KEYS = {
-  token: 'northstar-admin-token',
-  user: 'northstar-admin-user',
-};
+import {
+  ADMIN_AUTH_KEYS,
+  clearSession,
+  getStoredSession,
+  saveAuthSession,
+  subscribeAuthChanges,
+} from '../services/authStorage';
 
 const AdminContext = createContext();
 
-const getStoredAdmin = () => {
-  if (typeof window === 'undefined') return null;
-  const token = localStorage.getItem(ADMIN_STORAGE_KEYS.token);
-  const user = localStorage.getItem(ADMIN_STORAGE_KEYS.user);
-  return token && user ? { token, user: JSON.parse(user) } : null;
-};
-
 export function AdminProvider({ children }) {
-  const [admin, setAdmin] = useState(() => getStoredAdmin());
+  const [admin, setAdmin] = useState(() => getStoredSession(ADMIN_AUTH_KEYS));
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (admin) {
-      localStorage.setItem(ADMIN_STORAGE_KEYS.token, admin.token);
-      localStorage.setItem(ADMIN_STORAGE_KEYS.user, JSON.stringify(admin.user));
+  useEffect(() => subscribeAuthChanges((session, nextAuth) => {
+    if (session === 'admin') {
+      setAdmin(nextAuth);
     }
-  }, [admin]);
+  }), []);
 
   const login = async (email, password) => {
     setLoading(true);
     try {
       const data = await apiPost('/auth/admin/login', { email, password });
-      const next = { token: data.token, user: data.user };
-      localStorage.setItem(ADMIN_STORAGE_KEYS.token, data.token);
-      localStorage.setItem(ADMIN_STORAGE_KEYS.user, JSON.stringify(data.user));
+      const next = saveAuthSession('admin', data);
       setAdmin(next);
       return data;
     } finally {
@@ -41,8 +33,7 @@ export function AdminProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.removeItem(ADMIN_STORAGE_KEYS.token);
-    localStorage.removeItem(ADMIN_STORAGE_KEYS.user);
+    clearSession(ADMIN_AUTH_KEYS);
     setAdmin(null);
   };
 

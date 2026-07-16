@@ -1,5 +1,4 @@
-import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import { verifyAccessToken } from '../utils/tokens.js';
 
 const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -9,8 +8,7 @@ const authenticate = (req, res, next) => {
 
   try {
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = verifyAccessToken(token);
     next();
   } catch {
     res.status(401).json({ message: 'Invalid token' });

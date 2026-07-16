@@ -1,6 +1,6 @@
 import express from 'express';
-import jwt from 'jsonwebtoken';
 import SupportMessage from '../models/SupportMessage.js';
+import { verifyAccessToken } from '../utils/tokens.js';
 
 const router = express.Router();
 
@@ -9,7 +9,7 @@ const optionalAuth = (req, _res, next) => {
   if (authHeader?.startsWith('Bearer ')) {
     try {
       const token = authHeader.split(' ')[1];
-      req.user = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = verifyAccessToken(token);
     } catch {
       // ignore invalid token for public support form
     }
