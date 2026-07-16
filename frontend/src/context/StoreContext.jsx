@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { apiGet, apiPost, apiPut, apiDelete } from '../services/api';
 import {
   USER_AUTH_KEYS,
@@ -60,7 +61,10 @@ export function StoreProvider({ children }) {
     const guestCart = token ? [] : [...cart];
     const data = await apiPost('/auth/login', { email, password });
     const nextAuth = saveAuthSession('user', data);
-    setAuth(nextAuth);
+    // Commit auth before the login page navigates back to a protected route
+    flushSync(() => {
+      setAuth(nextAuth);
+    });
 
     if (guestCart.length) {
       for (const item of guestCart) {
@@ -79,7 +83,9 @@ export function StoreProvider({ children }) {
     const guestCart = token ? [] : [...cart];
     const data = await apiPost('/auth/register', { name, email, password });
     const nextAuth = saveAuthSession('user', data);
-    setAuth(nextAuth);
+    flushSync(() => {
+      setAuth(nextAuth);
+    });
 
     if (guestCart.length) {
       for (const item of guestCart) {

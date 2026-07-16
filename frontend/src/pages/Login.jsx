@@ -1,12 +1,32 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
+
+function getSafeRedirect(candidate, fallback = '/') {
+  if (!candidate || typeof candidate !== 'string') return fallback;
+  if (!candidate.startsWith('/') || candidate.startsWith('//')) return fallback;
+  if (candidate.startsWith('/login') || candidate.startsWith('/admin')) return fallback;
+  return candidate;
+}
+
+function resolveRedirect(searchParams, location) {
+  const fromQuery = searchParams.get('redirect');
+  if (fromQuery) return getSafeRedirect(fromQuery);
+
+  const from = location.state?.from;
+  if (from) {
+    return getSafeRedirect(`${from.pathname || ''}${from.search || ''}${from.hash || ''}`);
+  }
+
+  return '/';
+}
 
 export default function Login() {
   const { login, register } = useStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/';
+  const redirect = resolveRedirect(searchParams, location);
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -32,7 +52,7 @@ export default function Login() {
       }
 
       setMessage('');
-      navigate(redirect);
+      navigate(redirect, { replace: true });
     } catch (error) {
       setMessage(error.message || 'Authentication failed');
     }

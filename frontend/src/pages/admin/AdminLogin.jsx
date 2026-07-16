@@ -1,16 +1,38 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
+
+function getSafeRedirect(candidate, fallback = '/admin') {
+  if (!candidate || typeof candidate !== 'string') return fallback;
+  if (!candidate.startsWith('/admin') || candidate.startsWith('//')) return fallback;
+  if (candidate.startsWith('/admin/login')) return fallback;
+  return candidate;
+}
+
+function resolveRedirect(searchParams, location) {
+  const fromQuery = searchParams.get('redirect');
+  if (fromQuery) return getSafeRedirect(fromQuery);
+
+  const from = location.state?.from;
+  if (from) {
+    return getSafeRedirect(`${from.pathname || ''}${from.search || ''}${from.hash || ''}`);
+  }
+
+  return '/admin';
+}
 
 export default function AdminLogin() {
   const { admin, login, loading } = useAdmin();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const redirect = resolveRedirect(searchParams, location);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
 
   if (admin?.token) {
-    return <Navigate to="/admin" replace />;
+    return <Navigate to={redirect} replace />;
   }
 
   const handleSubmit = async (event) => {
@@ -18,7 +40,7 @@ export default function AdminLogin() {
     try {
       await login(email, password);
       setMessage('');
-      navigate('/admin');
+      navigate(redirect, { replace: true });
     } catch (error) {
       setMessage(error.message || 'Login failed');
     }

@@ -14,7 +14,14 @@ export default function ProtectedRoute({ children }) {
   }
 
   if (!auth?.token) {
-    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+    const returnTo = `${location.pathname}${location.search}${location.hash}`;
+    return (
+      <Navigate
+        to={`/login?redirect=${encodeURIComponent(returnTo)}`}
+        replace
+        state={{ from: location }}
+      />
+    );
   }
 
   return children;

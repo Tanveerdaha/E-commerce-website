@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { apiPost } from '../services/api';
 import {
   ADMIN_AUTH_KEYS,
@@ -25,7 +26,9 @@ export function AdminProvider({ children }) {
     try {
       const data = await apiPost('/auth/admin/login', { email, password });
       const next = saveAuthSession('admin', data);
-      setAdmin(next);
+      flushSync(() => {
+        setAdmin(next);
+      });
       return data;
     } finally {
       setLoading(false);

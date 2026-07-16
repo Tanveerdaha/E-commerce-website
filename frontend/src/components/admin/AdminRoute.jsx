@@ -1,11 +1,19 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 
 export default function AdminRoute() {
   const { admin } = useAdmin();
+  const location = useLocation();
 
   if (!admin?.token) {
-    return <Navigate to="/admin/login" replace />;
+    const returnTo = `${location.pathname}${location.search}${location.hash}`;
+    return (
+      <Navigate
+        to={`/admin/login?redirect=${encodeURIComponent(returnTo)}`}
+        replace
+        state={{ from: location }}
+      />
+    );
   }
 
   return <Outlet />;
